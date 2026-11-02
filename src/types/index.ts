@@ -306,6 +306,7 @@ export interface SystemSettings {
   whatsappAutoEnabled: boolean;
   whatsappProviderName: string;
   whatsappProviderStatus: 'CONNECTED' | 'PAUSED' | 'DISCONNECTED';
+  stripePublishableKey?: string;
   updatedAt: string;
   updatedByUserName: string;
 }

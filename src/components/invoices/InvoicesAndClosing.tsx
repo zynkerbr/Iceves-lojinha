@@ -159,19 +159,25 @@ export function InvoicesAndClosing({
       </div>
 
       {activeTab === 'closing_engine' ? (
-        <div className="space-y-5">
+        <div className="space-y-6">
           
-          {/* Closing Engine Controls */}
-          <div className="bg-[#1B1B1B] rounded-2xl border border-[#282828] p-5 shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#242424] pb-4">
+          {/* ULTRA-INTUITIVE 1-CLICK CLOSING WIZARD CARD */}
+          <div className="bg-gradient-to-br from-[#1F1B2C] to-[#161616] rounded-2xl border border-[#8B7CFF]/30 p-6 shadow-xl space-y-5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h3 className="font-bold text-[#F5F5F5] text-base">Execução do Fechamento Mensal</h3>
-                <p className="text-xs text-[#A1A1AA]">
-                  Selecione a competência para consolidar todos os cupons do balcão e mensalidades.
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-[#8B7CFF]/20 text-[#8B7CFF] border border-[#8B7CFF]/40 mb-2">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Assistente Inteligente de Fechamento & Faturamento
+                </span>
+                <h3 className="text-xl font-black text-white tracking-tight">
+                  Geração de Faturas da Competência
+                </h3>
+                <p className="text-xs text-[#A1A1AA] mt-1 max-w-xl">
+                  Consolide a mensalidade escolar e o consumo da lojinha de todos os alunos ativos em um único clique, com geração automática do Pix Copia e Cola e notificação por WhatsApp.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <select
                   value={selectedPeriod}
                   onChange={(e) => {
@@ -179,108 +185,109 @@ export function InvoicesAndClosing({
                     setPreview(null);
                     setClosingResult(null);
                   }}
-                  className="px-3 py-2 border border-[#2E2E2E] rounded-xl text-xs font-bold bg-[#151515] text-[#F5F5F5] focus:border-[#8B7CFF] focus:outline-none"
+                  className="px-4 py-2.5 border border-[#3A3A3A] rounded-xl text-xs font-bold bg-[#151515] text-white focus:border-[#8B7CFF] focus:outline-none shadow-sm"
                 >
-                  <option value="2026-10">Outubro de 2026 (Competência Vigente)</option>
-                  <option value="2026-11">Novembro de 2026</option>
-                  <option value="2026-09">Setembro de 2026 (Anterior)</option>
+                  <option value="2026-10">Outubro / 2026 (Competência Atual)</option>
+                  <option value="2026-11">Novembro / 2026</option>
+                  <option value="2026-09">Setembro / 2026</option>
                 </select>
 
-                <button
-                  type="button"
-                  disabled={isLoadingPreview}
-                  onClick={handleGeneratePreview}
-                  className="px-4 py-2 bg-[#F5F5F5] hover:bg-white text-[#101010] rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs disabled:opacity-40 cursor-pointer"
-                >
-                  <Calendar className="w-4 h-4" />
-                  {isLoadingPreview ? 'Calculando...' : 'Gerar Prévia'}
-                </button>
+                {!preview ? (
+                  <button
+                    type="button"
+                    disabled={isLoadingPreview}
+                    onClick={handleGeneratePreview}
+                    className="px-5 py-2.5 bg-[#8B7CFF] hover:bg-[#7A6AEE] text-white rounded-xl text-xs font-black transition flex items-center gap-2 shadow-lg disabled:opacity-40 cursor-pointer"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    {isLoadingPreview ? 'Calculando Prévia...' : 'Gerar Faturas do Mês'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={isExecutingClosing || !preview.canProceed}
+                    onClick={handleExecuteClosing}
+                    className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black transition flex items-center gap-2 shadow-lg disabled:opacity-40 cursor-pointer animate-pulse"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    {isExecutingClosing ? 'Publicando...' : 'Confirmar & Publicar'}
+                  </button>
+                )}
               </div>
             </div>
 
             {/* Error or Success banner */}
             {closingError && (
-              <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-xl flex items-center gap-2">
+              <div className="p-3.5 bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs rounded-xl flex items-center gap-2 font-medium">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
                 <span>{closingError}</span>
               </div>
             )}
 
             {closingResult && (
-              <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs rounded-xl space-y-1">
-                <div className="flex items-center gap-2 font-bold text-sm text-emerald-400">
+              <div className="p-4 bg-emerald-500/15 border border-emerald-500/30 text-emerald-200 text-xs rounded-xl space-y-1">
+                <div className="flex items-center gap-2 font-bold text-sm text-emerald-300">
                   <CheckCircle className="w-4 h-4" />
-                  <span>Fechamento de {formatPeriod(closingResult.period)} realizado com sucesso!</span>
+                  <span>Fechamento de {formatPeriod(closingResult.period)} concluído com sucesso!</span>
                 </div>
                 <p>
-                  Foram emitidas e publicadas <strong>{closingResult.count} faturas</strong>. As notificações WhatsApp foram agendadas e os consumos consolidados.
+                  Foram emitidas e publicadas <strong>{closingResult.count} faturas</strong> oficiais. Os responsáveis e alunos já podem acessar o portal para efetuar o pagamento.
                 </p>
               </div>
             )}
-
-            {/* Step-by-step description */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-              <div className="p-3 bg-[#151515] rounded-xl border border-[#242424]">
-                <span className="font-extrabold text-[#8B7CFF] block mb-0.5">1. Consolidação</span>
-                <p className="text-[#A1A1AA] text-[11px]">Agrupa todas as compras do caixa e soma à mensalidade.</p>
-              </div>
-              <div className="p-3 bg-[#151515] rounded-xl border border-[#242424]">
-                <span className="font-extrabold text-[#8B7CFF] block mb-0.5">2. Conferência Prévia</span>
-                <p className="text-[#A1A1AA] text-[11px]">Identifica pendências ou inconsistências.</p>
-              </div>
-              <div className="p-3 bg-[#151515] rounded-xl border border-[#242424]">
-                <span className="font-extrabold text-[#8B7CFF] block mb-0.5">3. Idempotência</span>
-                <p className="text-[#A1A1AA] text-[11px]">Repetir o fechamento nunca gera faturas duplicadas.</p>
-              </div>
-              <div className="p-3 bg-[#151515] rounded-xl border border-[#242424]">
-                <span className="font-extrabold text-[#8B7CFF] block mb-0.5">4. Publicação & Pix</span>
-                <p className="text-[#A1A1AA] text-[11px]">Gera BRCode Pix válido para o portal da família.</p>
-              </div>
-            </div>
           </div>
 
           {/* Generated Preview Block */}
           {preview && (
-            <div className="bg-[#1B1B1B] rounded-2xl border border-[#3A3A3A] shadow-md p-5 space-y-5 animate-in fade-in">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="bg-[#1B1B1B] rounded-2xl border border-[#3A3A3A] shadow-2xl p-6 space-y-6 animate-in fade-in">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#262626] pb-4">
                 <div>
-                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#8B7CFF]/10 text-[#8B7CFF] border border-[#8B7CFF]/20 mb-1">
-                    Prévia Oficial de Fechamento
+                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-1">
+                    Prévia Calculada com Sucesso
                   </span>
-                  <h3 className="text-lg font-extrabold text-[#F5F5F5]">
-                    Competência: {formatPeriod(preview.period)}
+                  <h3 className="text-lg font-black text-white">
+                    Resumo do Fechamento — {formatPeriod(preview.period)}
                   </h3>
                   <p className="text-xs text-[#A1A1AA]">
-                    Revise os totais calculados antes da aprovação administrativa final.
+                    Verifique abaixo os valores consolidados. Clique em "Confirmar & Publicar" para disponibilizar as faturas.
                   </p>
                 </div>
 
-                <button
-                  type="button"
-                  disabled={isExecutingClosing || !preview.canProceed}
-                  onClick={handleExecuteClosing}
-                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-extrabold transition shadow-md flex items-center gap-2 disabled:opacity-40 cursor-pointer"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  {isExecutingClosing ? 'Processando Faturas...' : 'Aprovar & Publicar Faturas'}
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPreview(null)}
+                    className="px-4 py-2 bg-[#252525] hover:bg-[#303030] text-[#A1A1AA] hover:text-white rounded-xl text-xs font-bold transition cursor-pointer"
+                  >
+                    Cancelar Prévia
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isExecutingClosing || !preview.canProceed}
+                    onClick={handleExecuteClosing}
+                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black transition shadow-md flex items-center gap-2 disabled:opacity-40 cursor-pointer"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    {isExecutingClosing ? 'Publicando...' : 'Confirmar & Publicar Faturas'}
+                  </button>
+                </div>
               </div>
 
               {/* Preview KPI Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3 bg-[#151515] rounded-xl border border-[#242424]">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="p-4 bg-[#141414] rounded-xl border border-[#262626]">
                   <span className="text-[10px] font-bold text-[#71717A] uppercase">Alunos Elegíveis</span>
-                  <span className="block text-xl font-black text-[#F5F5F5] mt-1">{preview.studentsCount} alunos</span>
+                  <span className="block text-xl font-black text-white mt-1">{preview.studentsCount} alunos</span>
                 </div>
-                <div className="p-3 bg-[#151515] rounded-xl border border-[#242424]">
+                <div className="p-4 bg-[#141414] rounded-xl border border-[#262626]">
                   <span className="text-[10px] font-bold text-[#71717A] uppercase">Mensalidades Base</span>
-                  <span className="block text-xl font-black text-[#F5F5F5] font-mono mt-1">{formatCurrency(preview.totalTuitions)}</span>
+                  <span className="block text-xl font-black text-white font-mono mt-1">{formatCurrency(preview.totalTuitions)}</span>
                 </div>
-                <div className="p-3 bg-[#151515] rounded-xl border border-[#242424]">
-                  <span className="text-[10px] font-bold text-[#71717A] uppercase">Consumo Cantina</span>
+                <div className="p-4 bg-[#141414] rounded-xl border border-[#262626]">
+                  <span className="text-[10px] font-bold text-[#71717A] uppercase">Consumo na Lojinha</span>
                   <span className="block text-xl font-black text-[#8B7CFF] font-mono mt-1">{formatCurrency(preview.totalConsumptions)}</span>
                 </div>
-                <div className="p-3 bg-[#201D2E] rounded-xl border border-[#3E3466]">
+                <div className="p-4 bg-[#1C182C] rounded-xl border border-[#483B80]">
                   <span className="text-[10px] font-bold text-[#8B7CFF] uppercase">Total Geral a Faturar</span>
                   <span className="block text-xl font-black text-white font-mono mt-1">{formatCurrency(preview.totalGrossToBill)}</span>
                 </div>
@@ -289,15 +296,15 @@ export function InvoicesAndClosing({
               {/* Inconsistencies or Warnings Box */}
               {preview.inconsistencies.length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-[#A1A1AA] uppercase">Avisos Identificados:</h4>
+                  <h4 className="text-xs font-bold text-[#A1A1AA] uppercase">Avisos e Pendências Identificadas:</h4>
                   <div className="space-y-1.5">
                     {preview.inconsistencies.map((inc, i) => (
                       <div 
                         key={i} 
-                        className={`p-2.5 rounded-xl text-xs flex items-center gap-2 border ${
+                        className={`p-3 rounded-xl text-xs flex items-center gap-2 border ${
                           inc.severity === 'BLOCKER' 
-                            ? 'bg-rose-500/10 border-rose-500/20 text-rose-300' 
-                            : 'bg-amber-500/10 border-amber-500/20 text-amber-300'
+                            ? 'bg-rose-500/15 border-rose-500/30 text-rose-300' 
+                            : 'bg-amber-500/15 border-amber-500/30 text-amber-300'
                         }`}
                       >
                         <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -310,24 +317,26 @@ export function InvoicesAndClosing({
 
               {/* List of students preview */}
               <div>
-                <h4 className="text-xs font-bold text-[#F5F5F5] mb-2">Composição Individual por Aluno</h4>
-                <div className="divide-y divide-[#242424] border border-[#282828] rounded-xl overflow-hidden text-xs">
+                <h4 className="text-xs font-bold text-white mb-2.5 uppercase tracking-wider">Detalhamento por Aluno</h4>
+                <div className="divide-y divide-[#242424] border border-[#262626] rounded-xl overflow-hidden text-xs bg-[#141414]">
                   {students.filter(s => s.status === 'ACTIVE').map(student => {
                     const studentTotal = student.defaultTuition + student.currentConsumptionBalance;
                     return (
-                      <div key={student.id} className="p-3 flex items-center justify-between hover:bg-[#202020]">
+                      <div key={student.id} className="p-3.5 flex items-center justify-between hover:bg-[#1C1C1C] transition">
                         <div>
-                          <span className="font-bold text-[#F5F5F5]">{student.name}</span>
-                          <span className="text-[#71717A] font-mono ml-2">({student.registrationNumber})</span>
-                          <p className="text-[11px] text-[#A1A1AA]">
-                            Mensalidade: {formatCurrency(student.defaultTuition)} • Consumo Lojinha: {formatCurrency(student.currentConsumptionBalance)}
+                          <span className="font-bold text-white text-sm">{student.name}</span>
+                          <span className="text-[#8B7CFF] font-mono ml-2 text-xs">({student.registrationNumber})</span>
+                          <p className="text-[11px] text-[#A1A1AA] mt-0.5">
+                            Mensalidade: {formatCurrency(student.defaultTuition)} • Consumo Lojinha: <strong className="text-white">{formatCurrency(student.currentConsumptionBalance)}</strong>
                           </p>
                         </div>
                         <div className="text-right">
-                          <span className="font-extrabold text-[#F5F5F5] font-mono text-sm block">
+                          <span className="font-black text-white font-mono text-base block">
                             {formatCurrency(studentTotal)}
                           </span>
-                          <span className="text-[10px] text-[#71717A]">Fatura Unificada</span>
+                          <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                            Pronto para Faturar
+                          </span>
                         </div>
                       </div>
                     );
@@ -335,6 +344,35 @@ export function InvoicesAndClosing({
                 </div>
               </div>
 
+            </div>
+          )}
+
+          {/* Quick Info Cards when no preview is active */}
+          {!preview && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-[#151515] rounded-2xl p-5 border border-[#282828] space-y-2">
+                <span className="w-8 h-8 rounded-xl bg-[#8B7CFF]/15 text-[#8B7CFF] flex items-center justify-center font-black text-xs">1</span>
+                <h4 className="font-bold text-white text-sm">Clique em Gerar Faturas</h4>
+                <p className="text-xs text-[#A1A1AA] leading-relaxed">
+                  O sistema agrupa automaticamente todos os produtos consumidos no balcão e soma à mensalidade fixa do mês.
+                </p>
+              </div>
+
+              <div className="bg-[#151515] rounded-2xl p-5 border border-[#282828] space-y-2">
+                <span className="w-8 h-8 rounded-xl bg-[#8B7CFF]/15 text-[#8B7CFF] flex items-center justify-center font-black text-xs">2</span>
+                <h4 className="font-bold text-white text-sm">Conferência com 1 Clique</h4>
+                <p className="text-xs text-[#A1A1AA] leading-relaxed">
+                  Analise a prévia detalhada com valores por aluno, avisos de pendência e totalizadores antes de aprovar.
+                </p>
+              </div>
+
+              <div className="bg-[#151515] rounded-2xl p-5 border border-[#282828] space-y-2">
+                <span className="w-8 h-8 rounded-xl bg-[#8B7CFF]/15 text-[#8B7CFF] flex items-center justify-center font-black text-xs">3</span>
+                <h4 className="font-bold text-white text-sm">Pix & Notificação WhatsApp</h4>
+                <p className="text-xs text-[#A1A1AA] leading-relaxed">
+                  Ao publicar, cada fatura recebe um QR Code Pix Copia e Cola único e um aviso automático no WhatsApp da família.
+                </p>
+              </div>
             </div>
           )}
 

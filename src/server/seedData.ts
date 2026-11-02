@@ -31,6 +31,7 @@ export const initialSettings: SystemSettings = {
   whatsappAutoEnabled: true,
   whatsappProviderName: 'WhatsApp Business Cloud API',
   whatsappProviderStatus: 'CONNECTED',
+  stripePublishableKey: 'pk_test_51UVBR4Ce1xrwLqvjzNeIaPvHRPuBmEgEoTU3x447Ywbb6C9IbHOmP24vMtUT3azAtGadTJ5jjDJ6GCU9eXkObiva00E01EwrRp',
   updatedAt: '2026-10-25T10:00:00Z',
   updatedByUserName: 'Administrador do Sistema'
 };

@@ -206,5 +206,20 @@ export const api = {
     return request<{ success: boolean }>('/api/reset-data', {
       method: 'POST'
     });
+  },
+
+  // Stripe Payments
+  async createStripeCheckoutSession(params: { invoiceId: string; amount: number; studentId: string }) {
+    return request<{ sessionId: string; publishableKey: string; message: string }>('/api/stripe/create-checkout-session', {
+      method: 'POST',
+      body: JSON.stringify(params)
+    });
+  },
+
+  async fulfillStripePayment(params: { invoiceId: string; amount: number; transactionRef?: string }) {
+    return request<{ success: boolean; payment: PixPayment; message: string }>('/api/stripe/fulfill-payment', {
+      method: 'POST',
+      body: JSON.stringify(params)
+    });
   }
 };

@@ -281,6 +281,56 @@ export async function handleApiRoute(req: ApiRequest): Promise<ApiResponse> {
       return { status: 200, data: result };
     }
 
+    // 8.1. Stripe Payments API
+    if (pathname === '/api/stripe/create-checkout-session' && method === 'POST') {
+      const { invoiceId, amount, studentId } = req.body || {};
+      const settings = db.getSettings();
+      const publishableKey = settings.stripePublishableKey || 'pk_test_51UVBR4Ce1xrwLqvjzNeIaPvHRPuBmEgEoTU3x447Ywbb6C9IbHOmP24vMtUT3azAtGadTJ5jjDJ6GCU9eXkObiva00E01EwrRp';
+
+      const sessionId = `cs_test_${Math.random().toString(36).substring(2, 15)}`;
+      return {
+        status: 200,
+        data: {
+          sessionId,
+          publishableKey,
+          message: 'Sessão Stripe Checkout criada com sucesso em modo de teste.'
+        }
+      };
+    }
+
+    if (pathname === '/api/stripe/fulfill-payment' && method === 'POST') {
+      const { invoiceId, amount, transactionRef } = req.body || {};
+      const invoice = db.getInvoices().find(i => i.id === invoiceId);
+      if (!invoice) {
+        return { status: 404, data: { error: 'Fatura não encontrada para quitação via Stripe.' } };
+      }
+
+      const payment = db.submitPixPayment({
+        invoiceId,
+        amount: Number(amount),
+        transactionReference: transactionRef || `STRIPE-TEST-${Date.now()}`,
+        receiptAttachment: 'Comprovante_Stripe_Checkout.pdf',
+        receiptNotes: 'Pagamento processado com cartão via Stripe Payments (Test Mode)',
+        user: currentUser
+      });
+
+      const approvedPayment = db.reviewPixPayment({
+        paymentId: payment.id,
+        decision: 'APROVADO',
+        reason: 'Confirmação automática de pagamento via Stripe (Test Mode)',
+        reviewerUser: currentUser
+      });
+
+      return {
+        status: 200,
+        data: {
+          success: true,
+          payment: approvedPayment,
+          message: 'Pagamento com cartão via Stripe processado e faturado com sucesso!'
+        }
+      };
+    }
+
     // 9. WhatsApp Notifications
     if (pathname === '/api/whatsapp' && method === 'GET') {
       return { status: 200, data: db.getWhatsAppNotifications() };

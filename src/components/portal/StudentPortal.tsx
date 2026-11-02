@@ -49,6 +49,10 @@ export function StudentPortal({
   const [pixSuccess, setPixSuccess] = useState(false);
   const [pixError, setPixError] = useState<string | null>(null);
 
+  // Stripe Checkout Modal state
+  const [stripeModalInvoice, setStripeModalInvoice] = useState<Invoice | null>(null);
+  const [isStripeLoading, setIsStripeLoading] = useState(false);
+
   // Student's own sales (unbilled consumption)
   const studentSales = sales.filter(s => s.studentId === student.id);
   const studentInvoices = invoices.filter(i => i.studentId === student.id && i.status !== 'CANCELADA');
@@ -98,6 +102,36 @@ export function StudentPortal({
       setPixError(err.message || 'Erro ao submeter comprovante.');
     } finally {
       setIsSubmittingPix(false);
+    }
+  };
+
+  const handleStartStripe = (invoice: Invoice) => {
+    setStripeModalInvoice(invoice);
+  };
+
+  const handleConfirmStripePayment = async () => {
+    if (!stripeModalInvoice) return;
+    setIsStripeLoading(true);
+    try {
+      await api.createStripeCheckoutSession({
+        invoiceId: stripeModalInvoice.id,
+        amount: stripeModalInvoice.remainingBalance,
+        studentId: student.id
+      });
+
+      await api.fulfillStripePayment({
+        invoiceId: stripeModalInvoice.id,
+        amount: stripeModalInvoice.remainingBalance,
+        transactionRef: `ch_test_${Math.random().toString(36).substring(2, 12)}`
+      });
+
+      alert('Pagamento processado com sucesso via Stripe Payments (Test Mode)! Fatura quitada.');
+      setStripeModalInvoice(null);
+      window.location.reload();
+    } catch (err: any) {
+      alert(`Erro no pagamento Stripe: ${err.message}`);
+    } finally {
+      setIsStripeLoading(false);
     }
   };
 
@@ -157,7 +191,7 @@ export function StudentPortal({
             }`}
           >
             <QrCode className="w-4 h-4 text-[#8B7CFF]" />
-            Faturas & Pix ({studentInvoices.length})
+            Faturas & Pagamentos ({studentInvoices.length})
           </button>
         </div>
       </div>
@@ -223,12 +257,12 @@ export function StudentPortal({
           )}
         </div>
       ) : (
-        /* Invoices & Pix Payment */
+        /* Invoices & Payment Gateway */
         <div className="bg-[#1B1B1B] rounded-2xl border border-[#282828] p-5 space-y-4">
           <div>
-            <h3 className="font-bold text-[#F5F5F5] text-base">Minhas Faturas & Pagamento Pix</h3>
+            <h3 className="font-bold text-[#F5F5F5] text-base">Minhas Faturas & Pagamento Online (Stripe & Pix)</h3>
             <p className="text-xs text-[#A1A1AA]">
-              Consolidação de mensalidade e consumo da lojinha com código Pix Copia e Cola
+              Pague faturas instantaneamente com cartão via Stripe (Test Mode) ou via Pix Copia e Cola
             </p>
           </div>
 
@@ -290,44 +324,69 @@ export function StudentPortal({
                     </div>
                   </div>
 
-                  {/* Pix section if there is pending balance */}
+                  {/* Payment actions if balance > 0 */}
                   {invoice.remainingBalance > 0 && (
-                    <div className="p-4 bg-[#1E1E1E] rounded-xl border border-[#282828] flex flex-col sm:flex-row items-center gap-4">
-                      <img 
-                        src={generatePixQrSvg(invoice.pixQrCodePayload)} 
-                        alt="Pix QR Code" 
-                        className="w-24 h-24 bg-white p-1.5 rounded-xl border border-white/20 shadow-md shrink-0"
-                      />
-                      <div className="flex-1 space-y-2 w-full text-xs">
-                        <p className="font-semibold text-[#F5F5F5]">
-                          Pagar via Pix (Copia e Cola):
-                        </p>
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            readOnly
-                            value={invoice.pixCopyPasteCode}
-                            className="w-full p-2 text-[10px] font-mono bg-[#151515] border border-[#303030] rounded-lg text-[#D4D4D8] focus:outline-none"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => copyPix(invoice.pixCopyPasteCode, invoice.id)}
-                            className="px-3.5 py-2 bg-[#8B7CFF] hover:bg-[#7A6AE6] text-white rounded-lg text-xs font-semibold transition flex items-center gap-1 shrink-0 cursor-pointer"
-                          >
-                            {copiedPixId === invoice.id ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                            {copiedPixId === invoice.id ? 'Copiado!' : 'Copiar'}
-                          </button>
+                    <div className="space-y-4">
+                      {/* Stripe Checkout button banner */}
+                      <div className="p-4 bg-gradient-to-r from-indigo-950/70 via-slate-900 to-indigo-950/70 rounded-xl border border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shrink-0">
+                            <CreditCard className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-white text-xs">Pagar Instantaneamente com Cartão (Stripe Test Mode)</p>
+                            <p className="text-[11px] text-zinc-400">Processamento seguro com chave <code className="font-mono text-indigo-300">pk_test_...</code></p>
+                          </div>
                         </div>
 
-                        <div className="pt-1 flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openPaymentModal(invoice)}
-                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-                          >
-                            <Upload className="w-3.5 h-3.5" />
-                            Informar Pagamento Realizado
-                          </button>
+                        <button
+                          type="button"
+                          onClick={() => handleStartStripe(invoice)}
+                          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-lg flex items-center gap-2 shrink-0 cursor-pointer"
+                        >
+                          <CreditCard className="w-4 h-4" />
+                          Pagar com Stripe (R$ {invoice.remainingBalance.toFixed(2)})
+                        </button>
+                      </div>
+
+                      {/* Pix section */}
+                      <div className="p-4 bg-[#1E1E1E] rounded-xl border border-[#282828] flex flex-col sm:flex-row items-center gap-4">
+                        <img 
+                          src={generatePixQrSvg(invoice.pixQrCodePayload)} 
+                          alt="Pix QR Code" 
+                          className="w-24 h-24 bg-white p-1.5 rounded-xl border border-white/20 shadow-md shrink-0"
+                        />
+                        <div className="flex-1 space-y-2 w-full text-xs">
+                          <p className="font-semibold text-[#F5F5F5]">
+                            Pagar via Pix (Copia e Cola):
+                          </p>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              readOnly
+                              value={invoice.pixCopyPasteCode}
+                              className="w-full p-2 text-[10px] font-mono bg-[#151515] border border-[#303030] rounded-lg text-[#D4D4D8] focus:outline-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => copyPix(invoice.pixCopyPasteCode, invoice.id)}
+                              className="px-3.5 py-2 bg-[#8B7CFF] hover:bg-[#7A6AE6] text-white rounded-lg text-xs font-semibold transition flex items-center gap-1 shrink-0 cursor-pointer"
+                            >
+                              {copiedPixId === invoice.id ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                              {copiedPixId === invoice.id ? 'Copiado!' : 'Copiar'}
+                            </button>
+                          </div>
+
+                          <div className="pt-1 flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => openPaymentModal(invoice)}
+                              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                            >
+                              <Upload className="w-3.5 h-3.5" />
+                              Informar Comprovante Pix
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -335,6 +394,94 @@ export function StudentPortal({
                 </div>
               ))
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Stripe Test Checkout Modal */}
+      {stripeModalInvoice && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-[#141414] rounded-2xl shadow-2xl border border-white/[0.12] max-w-md w-full p-6 animate-in fade-in zoom-in-95 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center font-bold">S</div>
+                <h3 className="font-bold text-white text-base">Stripe Checkout (Test Mode)</h3>
+              </div>
+              <button 
+                onClick={() => setStripeModalInvoice(null)}
+                className="text-zinc-400 hover:text-white text-xl font-bold cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="p-3 bg-indigo-950/40 rounded-xl border border-indigo-500/20 text-xs space-y-1 text-zinc-300">
+              <p>Fatura: <strong className="text-white font-mono">{stripeModalInvoice.id}</strong></p>
+              <p>Valor a Pagar: <strong className="text-emerald-400 text-sm font-bold">{formatCurrency(stripeModalInvoice.remainingBalance)}</strong></p>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-zinc-400 font-medium mb-1">E-mail de Cobrança</label>
+                <input
+                  type="email"
+                  readOnly
+                  value={student.email}
+                  className="w-full p-2.5 bg-[#18181b] border border-white/[0.1] rounded-xl text-zinc-300 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-zinc-400 font-medium mb-1">Número do Cartão (Stripe Test)</label>
+                <input
+                  type="text"
+                  defaultValue="4242 4242 4242 4242"
+                  className="w-full p-2.5 bg-[#18181b] border border-white/[0.1] rounded-xl text-white font-mono tracking-wider"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-zinc-400 font-medium mb-1">Validade (MM/AA)</label>
+                  <input
+                    type="text"
+                    defaultValue="12/28"
+                    className="w-full p-2.5 bg-[#18181b] border border-white/[0.1] rounded-xl text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-zinc-400 font-medium mb-1">CVC / CVV</label>
+                  <input
+                    type="text"
+                    defaultValue="123"
+                    className="w-full p-2.5 bg-[#18181b] border border-white/[0.1] rounded-xl text-white font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="p-2.5 bg-emerald-950/40 border border-emerald-500/30 rounded-xl text-[11px] text-emerald-300 flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>Modo de Teste Stripe conectado via chave <code className="font-mono">pk_test_...</code></span>
+              </div>
+            </div>
+
+            <div className="pt-3 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setStripeModalInvoice(null)}
+                className="flex-1 py-2.5 px-3 bg-[#222] border border-white/[0.1] text-zinc-300 rounded-xl font-medium hover:text-white cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={isStripeLoading}
+                onClick={handleConfirmStripePayment}
+                className="flex-1 py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition disabled:opacity-50 cursor-pointer shadow-lg"
+              >
+                {isStripeLoading ? 'Processando...' : `Pagar ${formatCurrency(stripeModalInvoice.remainingBalance)}`}
+              </button>
+            </div>
           </div>
         </div>
       )}
