@@ -729,6 +729,10 @@ class DatabaseService {
       this.scheduleInvoiceNotifications(invoice, student);
     }
 
+    if (createdInvoices.length === 0) {
+      throw new Error(`Todas as faturas para a competência ${period} já foram geradas e publicadas anteriormente para todos os alunos ativos.`);
+    }
+
     this.logAudit(
       user.id,
       user.name,

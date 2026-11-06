@@ -1,0 +1,6 @@
+{
+  "summary": "Implementation plan for the complete restructuring of Lojinha do Campus SaaS, covering financial engine consolidation, invoice generation, Stripe & Pix payments, POS atomicity, and dark UI polish.",
+  "updatedAt": "2026-11-02T18:44:20.143464416Z",
+  "requestFeedback": true,
+  "userFacing": true
+}
